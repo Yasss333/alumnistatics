@@ -1,0 +1,671 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VESIT Alumni Analytics — TPC Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --border: #1e2d47;
+    --accent: #3b82f6;
+    --accent2: #10b981;
+    --accent3: #f59e0b;
+    --accent4: #ef4444;
+    --accent5: #8b5cf6;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --card-glow: rgba(59,130,246,0.08);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Space Grotesk', sans-serif; min-height: 100vh; }
+  
+  .header {
+    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 24px 32px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+    backdrop-filter: blur(20px);
+  }
+  .header-left h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; color: #fff; }
+  .header-left p { font-size: 12px; color: var(--muted); margin-top: 2px; font-family: 'DM Mono', monospace; }
+  .badge { background: var(--accent); color: #fff; font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 20px; letter-spacing: 0.5px; }
+
+  .main { padding: 28px 32px; max-width: 1400px; margin: 0 auto; }
+
+  /* KPI STRIP */
+  .kpi-strip { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 28px; }
+  .kpi-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 18px;
+    position: relative; overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0,0,0,0.4); }
+  .kpi-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+  .kpi-card:nth-child(1)::before { background: var(--accent); }
+  .kpi-card:nth-child(2)::before { background: var(--accent2); }
+  .kpi-card:nth-child(3)::before { background: var(--accent3); }
+  .kpi-card:nth-child(4)::before { background: var(--accent4); }
+  .kpi-card:nth-child(5)::before { background: var(--accent5); }
+  .kpi-val { font-size: 36px; font-weight: 700; letter-spacing: -2px; line-height: 1; margin-bottom: 6px; }
+  .kpi-card:nth-child(1) .kpi-val { color: var(--accent); }
+  .kpi-card:nth-child(2) .kpi-val { color: var(--accent2); }
+  .kpi-card:nth-child(3) .kpi-val { color: var(--accent3); }
+  .kpi-card:nth-child(4) .kpi-val { color: var(--accent4); }
+  .kpi-card:nth-child(5) .kpi-val { color: var(--accent5); }
+  .kpi-label { font-size: 11px; color: var(--muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.8px; }
+
+  /* SLICER CHIPS */
+  .chip { border: 1px solid rgba(255,255,255,0.04); border-radius: 20px; padding: 6px 12px; font-size: 13px; cursor: pointer; background: transparent; color: var(--muted); }
+  .chip.sel { background: rgba(59,130,246,0.14); border-color: rgba(59,130,246,0.28); color: var(--text); }
+
+  /* TABS */
+  .tabs { display: flex; gap: 4px; margin-bottom: 24px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 4px; width: fit-content; }
+  .tab { padding: 8px 20px; border-radius: 7px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; background: transparent; color: var(--muted); transition: all 0.2s; }
+  .tab.active { background: var(--accent); color: #fff; }
+  .tab:hover:not(.active) { color: var(--text); background: var(--surface2); }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* CHARTS GRID */
+  .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+  .chart-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px;
+  }
+  .chart-card.full-width { grid-column: 1/-1; }
+  .chart-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  .chart-title .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .chart-wrap { position: relative; height: 260px; }
+  .chart-wrap.tall { height: 320px; }
+
+  /* HEATMAP */
+  .heatmap-container { overflow-x: auto; }
+  .heatmap-table { border-collapse: collapse; font-size: 11px; width: 100%; }
+  .heatmap-table th { background: var(--surface2); color: var(--muted); padding: 6px 8px; font-family: 'DM Mono', monospace; font-size: 10px; text-align: center; border: 1px solid var(--border); white-space: nowrap; }
+  .heatmap-table td { padding: 5px 8px; text-align: center; border: 1px solid var(--border); font-family: 'DM Mono', monospace; font-size: 10px; min-width: 36px; transition: opacity 0.2s; }
+  .heatmap-table .branch-label { text-align: left; color: var(--text); font-size: 10px; font-weight: 600; background: var(--surface2); white-space: nowrap; padding: 5px 12px; }
+
+  /* TABLE */
+  .table-controls { display: flex; gap: 12px; margin-bottom: 16px; align-items: center; flex-wrap: wrap; }
+  .search-box {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px 14px; color: var(--text); font-family: 'Space Grotesk', sans-serif; font-size: 13px;
+    outline: none; width: 280px;
+  }
+  .search-box:focus { border-color: var(--accent); }
+  .filter-select {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px 14px; color: var(--text); font-family: 'Space Grotesk', sans-serif; font-size: 13px;
+    outline: none; cursor: pointer;
+  }
+  .count-badge { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; font-size: 12px; color: var(--muted); font-family: 'DM Mono', monospace; margin-left: auto; }
+
+  .data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .data-table thead th { background: var(--surface2); color: var(--muted); padding: 10px 12px; text-align: left; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.7px; border-bottom: 1px solid var(--border); position: sticky; top: 0; white-space: nowrap; }
+  .data-table tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; }
+  .data-table tbody tr:hover { background: var(--surface2); }
+  .data-table td { padding: 10px 12px; vertical-align: top; }
+  .table-scroll { max-height: 480px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; }
+  .table-scroll::-webkit-scrollbar { width: 6px; }
+  .table-scroll::-webkit-scrollbar-track { background: var(--surface); }
+  .table-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; margin: 2px 2px 2px 0; white-space: nowrap; }
+  .tag-blue { background: rgba(59,130,246,0.15); color: #93c5fd; }
+  .tag-green { background: rgba(16,185,129,0.15); color: #6ee7b7; }
+  .tag-amber { background: rgba(245,158,11,0.15); color: #fcd34d; }
+  .tag-red { background: rgba(239,68,68,0.15); color: #fca5a5; }
+  .tag-purple { background: rgba(139,92,246,0.15); color: #c4b5fd; }
+
+  .priority-bar { display: flex; align-items: center; gap: 6px; }
+  .priority-dots { display: flex; gap: 3px; }
+  .priority-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--border); }
+  .priority-dot.active { background: var(--accent2); }
+
+  /* DECISION GUIDE */
+  .decision-grid { display: grid; gap: 14px; }
+  .decision-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px;
+    display: grid; grid-template-columns: 1fr 1fr 1fr 1.2fr; gap: 16px;
+    transition: border-color 0.2s;
+  }
+  .decision-card:hover { border-color: var(--accent); }
+  .decision-card .objective { grid-column: 1/-1; font-size: 14px; font-weight: 700; color: var(--accent); margin-bottom: 4px; }
+  .dc-section label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.7px; font-weight: 600; display: block; margin-bottom: 4px; }
+  .dc-section p { font-size: 12px; color: var(--text); line-height: 1.5; }
+
+  /* DASHBOARD LAYOUT */
+  .dashboard { display: grid; grid-template-columns: 280px 1fr; gap: 20px; max-width: 1400px; margin: 0 auto; padding: 0 32px; transition: grid-template-columns 0.25s ease; }
+  .sidebar {
+    background: linear-gradient(180deg,var(--surface) 0%, var(--surface2) 100%);
+    border: 1px solid var(--border); border-radius: 12px; height: calc(100vh - 96px); position: sticky; top: 72px; overflow:auto; transition: width 0.25s ease, transform 0.25s ease;
+  }
+  /* Collapsed (minimized) sidebar for desktop */
+  .dashboard.collapsed { grid-template-columns: 72px 1fr; }
+  .sidebar.collapsed { width:72px; min-width:72px; max-width:72px; overflow:hidden; }
+  .sidebar.collapsed > * { display:none; }
+  .sidebar.collapsed::after { content:''; display:block; height:100%; }
+  .sidebar .filter-select { width: 100%; }
+  .dashboard .main { padding: 28px 0; max-width: none; }
+  /* Make KPI strip horizontally scrollable on narrow screens */
+  .kpi-strip { overflow-x: auto; grid-auto-flow: column; grid-auto-columns: minmax(180px,1fr); }
+  .kpi-card { min-width: 160px; }
+
+  /* RESPONSIVE */
+  @media (max-width: 900px) {
+    .dashboard { grid-template-columns: 1fr; padding: 0 16px; }
+    .sidebar { position: fixed; left: 0; top: 64px; bottom: 0; width: 76%; max-width: 360px; transform: translateX(-110%); transition: transform 0.28s ease-in-out; z-index: 300; height: calc(100vh - 64px); }
+    .sidebar.open { transform: translateX(0); }
+    #menuBtn { display: inline-flex; }
+    .kpi-strip { grid-template-columns: repeat(2, 1fr); }
+    .charts-grid { grid-template-columns: 1fr; }
+    .decision-card { grid-template-columns: 1fr; }
+    .main { padding: 16px 0; }
+    .kpi-strip { grid-auto-columns: minmax(140px,1fr); }
+  }
+
+  .section-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <h1>VESIT Alumni Analytics</h1>
+    <p>TPC — Training & Placement Cell · Alumni Engagement Survey</p>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px">
+    <button id="menuBtn" aria-label="Toggle menu" aria-expanded="false" onclick="toggleSidebar(event)" style="background:transparent;border:1px solid var(--border);padding:8px;border-radius:8px;color:var(--text);cursor:pointer">☰</button>
+    <span class="badge">174 Responses</span>
+  </div>
+</div>
+
+<div class="dashboard">
+  <aside class="sidebar" id="sidebar">
+    <div style="padding:18px;border-bottom:1px solid var(--border)">
+      <div style="font-weight:700;margin-bottom:6px">Quick Filters</div>
+      <select id="sb-branch" class="filter-select" onchange="applySidebarFilter()">
+        <option value="">All Branches</option>
+        <option>Electronics and Telecommunications</option>
+        <option>Information Technology</option>
+        <option>Electronics Engineering</option>
+        <option>Computer Engineering</option>
+        <option>Masters of Computer Application</option>
+        <option>Artificial Intelligence and Datascience</option>
+        <option>Instrumentation Engineering</option>
+      </select>
+    </div>
+    <div style="padding:18px">
+      <div style="font-weight:700;margin-bottom:6px">KPIs</div>
+      <div style="color:var(--muted);font-size:13px">Total Responses</div>
+      <div style="font-size:20px;font-weight:700;margin-top:6px">174</div>
+    </div>
+  </aside>
+
+  <main class="main">
+
+  <!-- SLICER / CHIPS -->
+  <div style="margin-bottom:16px;display:flex;gap:8px;flex-wrap:wrap" id="slicer">
+    <button class="chip sel" data-b="ALL" onclick="setBranch('ALL', this)">All branches</button>
+    <button class="chip" data-b="EXTC" onclick="setBranch('EXTC', this)">E&TC</button>
+    <button class="chip" data-b="IT" onclick="setBranch('IT', this)">IT</button>
+    <button class="chip" data-b="EE" onclick="setBranch('EE', this)">Electronics Engg.</button>
+    <button class="chip" data-b="CE" onclick="setBranch('CE', this)">Computer Engg.</button>
+    <button class="chip" data-b="MCA" onclick="setBranch('MCA', this)">MCA</button>
+    <button class="chip" data-b="AIDS" onclick="setBranch('AIDS', this)">AI & DS</button>
+    <button class="chip" data-b="INSTR" onclick="setBranch('INSTR', this)">Instrumentation</button>
+    <button class="chip" data-b="ECS" onclick="setBranch('ECS', this)">E&CS</button>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpi-strip">
+    <div class="kpi-card"><div class="kpi-val">174</div><div class="kpi-label">Total Responses</div></div>
+    <div class="kpi-card"><div class="kpi-val" id="kpi-placement">—</div><div class="kpi-label">Placement Support Alumni</div></div>
+    <div class="kpi-card"><div class="kpi-val">18</div><div class="kpi-label">HR Contacts Shared</div></div>
+    <div class="kpi-card"><div class="kpi-val">19</div><div class="kpi-label">Passout Batches</div></div>
+    <div class="kpi-card"><div class="kpi-val">96</div><div class="kpi-label">Mentorship Offers</div></div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('overview', event)">Overview</button>
+    <button class="tab" onclick="switchTab('placement', event)">Placement Alumni</button>
+    <button class="tab" onclick="switchTab('heatmap', event)">Batch × Branch</button>
+    <button class="tab" onclick="switchTab('hr', event)">HR Pipeline</button>
+    <button class="tab" onclick="switchTab('guide', event)">Decision Guide</button>
+  </div>
+
+  <!-- OVERVIEW TAB -->
+  <div class="tab-content active" id="tab-overview">
+    <div class="charts-grid">
+      <div class="chart-card">
+        <div class="chart-title"><span class="dot" style="background:#3b82f6"></span>Alumni by Branch</div>
+        <div class="chart-wrap"><canvas id="branchChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title"><span class="dot" style="background:#10b981"></span>Engagement Types Offered</div>
+        <div class="chart-wrap"><canvas id="engChart"></canvas></div>
+      </div>
+      <div class="chart-card full-width">
+        <div class="chart-title"><span class="dot" style="background:#f59e0b"></span>Participation Trend by Passout Year</div>
+        <div class="chart-wrap tall"><canvas id="batchChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title"><span class="dot" style="background:#8b5cf6"></span>Top Companies (Alumni Working At)</div>
+        <div class="chart-wrap"><canvas id="companyChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title"><span class="dot" style="background:#ef4444"></span>Program Distribution</div>
+        <div class="chart-wrap"><canvas id="programChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PLACEMENT ALUMNI TAB -->
+  <div class="tab-content" id="tab-placement">
+    <div class="table-controls">
+      <input class="search-box" type="text" id="placementSearch" placeholder="Search by name, org, branch…" oninput="filterPlacement()">
+      <select class="filter-select" id="branchFilter" onchange="filterPlacement()">
+        <option value="">All Branches</option>
+        <option>Electronics and Telecommunications</option>
+        <option>Information Technology</option>
+        <option>Electronics Engineering</option>
+        <option>Computer Engineering</option>
+        <option>Masters of Computer Application</option>
+        <option>Artificial Intelligence and Datascience</option>
+        <option>Instrumentation Engineering</option>
+      </select>
+      <div class="count-badge" id="placementCount">—</div>
+    </div>
+    <div class="table-scroll">
+      <table class="data-table" id="placementTable">
+        <thead><tr>
+          <th>Name</th><th>Branch</th><th>Organization</th><th>Position</th>
+          <th>Email</th><th>Mobile</th><th>Engagement</th><th>Year</th><th>Priority</th>
+        </tr></thead>
+        <tbody id="placementBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- HEATMAP TAB -->
+  <div class="tab-content" id="tab-heatmap">
+    <div class="chart-card">
+      <div class="section-title">Alumni Count per Branch per Passout Year — darker = more alumni</div>
+      <div class="heatmap-container" id="heatmapContainer"></div>
+    </div>
+  </div>
+
+  <!-- HR PIPELINE TAB -->
+  <div class="tab-content" id="tab-hr">
+    <div class="table-scroll">
+      <table class="data-table" id="hrTable">
+        <thead><tr>
+          <th>Alumni Name</th><th>Company</th><th>Position</th><th>Branch</th><th>Email</th><th>Mobile</th><th>HR Contact Details</th>
+        </tr></thead>
+        <tbody id="hrBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- DECISION GUIDE TAB -->
+  <div class="tab-content" id="tab-guide">
+    <div class="decision-grid" id="decisionGrid"></div>
+  </div>
+
+</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+const branchData = {"Electronics and Telecommunications":61,"Information Technology":51,"Electronics Engineering":23,"Computer Engineering":21,"Masters of Computer Application":8,"Artificial Intelligence and Datascience":5,"Instrumentation Engineering":3,"Electronics and Computer Science":2};
+const engData = {"Career Guidance / Mentorship":96,"Mock Interview / Resume Review":84,"Guest Lecture / Seminar":64,"Placement Support / Referrals":64,"Event Participation / Jury / Panelist":42,"Workshop / Technical Training":37,"Board of Studies (BOS) / Curriculum Feedback":18,"Research Collaboration":14,"Internship Opportunities":12,"Entrepreneurship / Startup Mentorship":12};
+const batchData = {"2003":3,"2006":1,"2008":1,"2009":3,"2010":1,"2011":1,"2012":1,"2014":3,"2015":4,"2016":6,"2017":11,"2018":18,"2019":16,"2020":15,"2021":23,"2022":21,"2023":16,"2024":16,"2025":10,"2026":1};
+const companyData = {"TCS":3,"Capgemini":3,"JP Morgan Chase & Co":3,"Deloitte USI":2,"Deloitte":2,"SAP":2,"Saint Gobain":2,"POWERGRID":2,"ISS-STOXX":2,"Ministry of Defence":2};
+const programData = {"Bachelor of Engineering":165,"M.C.A":8,"M.E.":1};
+
+const placementAlumni = [
+  {name:"Tamanna Rupani",branch:"Electronics Engineering",org:"Bank of New York",pos:"VP Full Stack Engineer",email:"tamannarupani96@gmail.com",mobile:"9594403000",eng:"Guest Lecture, Career Guidance, Mock Interview, Placement Support",year:"2017",priority:4},
+  {name:"Vishal Mahesh Israni",branch:"Information Technology",org:"JP Morgan Chase",pos:"Vice President",email:"2015vishal.israni@gmail.com",mobile:"8698552370",eng:"Guest Lecture, Workshop, Career Guidance, Mock Interview, Placement Support, BOS, Industry Collaboration, Events, Startup Mentorship, Research",year:"2018",priority:5},
+  {name:"Rushabh Shah",branch:"Information Technology",org:"Morgan Stanley",pos:"Vice President",email:"rush2412@gmail.com",mobile:"9987696706",eng:"Placement Support",year:"2011",priority:2},
+  {name:"Priyadarshini Gyanaprakashan",branch:"Electronics and Telecommunications",org:"Blackrock",pos:"Managing Director",email:"prigyan@gmail.com",mobile:"9820806224",eng:"Guest Lecture, Career Guidance, Mock Interview, Placement Support",year:"2003",priority:4},
+  {name:"Abhigya Upadhyay",branch:"Electronics Engineering",org:"Qualcomm India",pos:"Sr. Software Engineer",email:"upadhyayabhigya0611@gmail.com",mobile:"8788363046",eng:"Career Guidance, Mock Interview, Placement Support",year:"2018",priority:3},
+  {name:"Riya Karia",branch:"Information Technology",org:"JP Morgan Chase & Co",pos:"Senior Software Engineer",email:"kariariya20@gmail.com",mobile:"9922892244",eng:"Career Guidance, Placement Support",year:"2019",priority:3},
+  {name:"Mohit Singh Adhikari",branch:"Electronics and Telecommunications",org:"Here Technologies",pos:"Data Scientist",email:"—",mobile:"9820172922",eng:"Guest Lecture, Workshop, Career Guidance, Mock Interview, Placement Support, BOS, Industry Collaboration, Events, Startup Mentorship, Internship, Industrial Visit, Research, Scholarship",year:"2022",priority:5},
+  {name:"Gayatri Ganapathy",branch:"Computer Engineering",org:"Electronic Arts",pos:"—",email:"gayatrig1997@gmail.com",mobile:"17787237244",eng:"All engagement types",year:"2019",priority:5},
+  {name:"Amit Vishwakarma",branch:"Masters of Computer Application",org:"Quantiphi",pos:"Senior Level 1",email:"amitvishwa789@gmail.com",mobile:"8652012928",eng:"Career Guidance, Mock Interview, Placement Support",year:"2022",priority:3},
+  {name:"Moin Ghadiyali",branch:"Masters of Computer Application",org:"Nomura Services India",pos:"Sr. Software Engineer",email:"2020.moin.ghadiyali@ves.ac.in",mobile:"9082170938",eng:"Workshop, Mock Interview, Placement Support, BOS, Internship, Research, Scholarship",year:"2022",priority:5},
+  {name:"Aryan Raje",branch:"Computer Engineering",org:"Deloitte USI",pos:"Analyst",email:"aryanraje159@gmail.com",mobile:"8104982720",eng:"Guest Lecture, Career Guidance, Mock Interview, Placement Support, Events",year:"2025",priority:4},
+  {name:"Nikita Joshi",branch:"Electronics Engineering",org:"Nav Canada",pos:"Business Analyst",email:"Nikitajoshi99@gmail.com",mobile:"16476719698",eng:"Career Guidance, Mock Interview, Placement Support",year:"2019",priority:3},
+  {name:"Pranay Mahaldar",branch:"Electronics Engineering",org:"SAP",pos:"Senior Cybersecurity Advisor",email:"pranaymahaldar@hotmail.com",mobile:"7051054747",eng:"Guest Lecture, Career Guidance, Mock Interview, Placement Support",year:"2018",priority:4},
+  {name:"Himanshu Gosavi",branch:"Electronics and Telecommunications",org:"NTT DATA",pos:"SDE2",email:"2016.himanshu.gosavi@ves.ac.in",mobile:"7028035004",eng:"Career Guidance, Placement Support",year:"2020",priority:3},
+  {name:"Samarth Shahu",branch:"Information Technology",org:"Deloitte India",pos:"Consultant",email:"shahusam20@gmail.com",mobile:"8419922361",eng:"Guest Lecture, Career Guidance, Mock Interview, Placement Support",year:"2021",priority:4},
+  {name:"Nidhi Thakkar",branch:"Information Technology",org:"JP Morgan Chase & Co",pos:"Software Engineer II",email:"nthakkar2010@gmail.com",mobile:"9769326454",eng:"Workshop, Career Guidance, Placement Support",year:"2023",priority:3},
+  {name:"Srishti Dubey",branch:"Electronics and Telecommunications",org:"Walmart",pos:"Senior Data Engineer",email:"srishtidubey.96@gmail.com",mobile:"12064667485",eng:"Mock Interview, Placement Support",year:"2018",priority:3},
+  {name:"Apurva Naik",branch:"Electronics and Telecommunications",org:"IBM",pos:"Senior Consultant",email:"—",mobile:"9158230821",eng:"Placement Support",year:"2018",priority:2},
+  {name:"Aditi Miniyar",branch:"Information Technology",org:"Deloitte USI",pos:"—",email:"aditiminiyar@gmail.com",mobile:"7499254914",eng:"Guest Lecture, Career Guidance, Mock Interview, Placement Support",year:"2024",priority:4},
+  {name:"Aishwarya C",branch:"Electronics Engineering",org:"Salesforce",pos:"—",email:"2017.aishwarya.chourasia@ves.ac.in",mobile:"919969212467",eng:"Guest Lecture, Workshop, Career Guidance, Mock Interview, Placement Support",year:"2021",priority:4},
+  {name:"Ganesh Parab",branch:"Masters of Computer Application",org:"Quantiphi",pos:"MLE",email:"21p.ganesh@gmail.com",mobile:"9702038678",eng:"Guest Lecture, Workshop, Career Guidance, Placement Support, Events, Research",year:"2022",priority:4},
+  {name:"Jasmine Dhirwani",branch:"Computer Engineering",org:"Barclays",pos:"Software Engineer",email:"2020.jasmine.dhirwani@ves.ac.in",mobile:"7038844244",eng:"Placement Support",year:"2024",priority:2},
+  {name:"Prakashkumar Thiagarajan",branch:"Information Technology",org:"Oracle UK",pos:"—",email:"prakashkumar1988@gmail.com",mobile:"7584019401",eng:"Career Guidance, Mock Interview, Placement Support, Events",year:"2008",priority:4},
+  {name:"Malvika Dagdu",branch:"Electronics and Telecommunications",org:"JPMorgan Chase & Co.",pos:"Risk Associate",email:"malvikadagdu@gmail.com",mobile:"18482188652",eng:"Placement Support",year:"2018",priority:2},
+  {name:"Tejas Samant",branch:"Information Technology",org:"TCS",pos:"Systems Engineer",email:"2020.tejas.samant@ves.ac.in",mobile:"9930296337",eng:"Career Guidance, Placement Support, Internship",year:"2023",priority:3},
+];
+
+const hrAlumni = [
+  {name:"Vivek Krishnamoorthy",company:"QuantInsti",pos:"Head - Research & Content",branch:"EXTC",email:"vivek.krishnamoorthy@gmail.com",mobile:"9619758604",hr:"nisha.s@quantinsti.com; ekta.s@quantinsti.com (mention his name)"},
+  {name:"Prathmesh Pawar",company:"Vector Consulting Group",pos:"—",branch:"AI & DS",email:"prathmeshpawar2001@gmail.com",mobile:"8928589535",hr:"subhodeep@vectorconsulting.in"},
+  {name:"Amit Vishwakarma",company:"Quantiphi",pos:"Senior Level 1",branch:"MCA",email:"amitvishwa789@gmail.com",mobile:"8652012928",hr:"simyoan.diwarln01@quantiphi.com"},
+  {name:"Atharva Godkar",company:"Swagelok Bombay",pos:"Proposal Engineer",branch:"Electronics Engg.",email:"arg96511@gmail.com",mobile:"9820374524",hr:"2267164000 (Deepaki Vishwakarma, HR)"},
+  {name:"Neel Gala",company:"Coditas",pos:"—",branch:"Computer Engg.",email:"neelkgala@gmail.com",mobile:"8080758208",hr:"hr@coditas.com"},
+  {name:"Pronoy",company:"ECGC Ltd.",pos:"—",branch:"Electronics Engg.",email:"pronoym99@gmail.com",mobile:"7738034876",hr:"hrd@ecgc.in (Govt. Org — internships/apprenticeships)"},
+  {name:"Kanaiya Kanabar",company:"WTW",pos:"—",branch:"IT",email:"2019kanaiya.kanabar@ves.ac.in",mobile:"7622091456",hr:"Malvika Mishra (HR at WTW)"},
+  {name:"Vikas Kushawaha",company:"Astellas",pos:"—",branch:"EXTC",email:"vikaskushawaha111@gmail.com",mobile:"9594812482",hr:"https://linkedin.com/in/jagadeesan-narayanasamy-5615726"},
+  {name:"Ronak Panchal",company:"Wissen Technology",pos:"—",branch:"EXTC",email:"ronak.v.panchal01@gmail.com",mobile:"9137427147",hr:"Contact Wissen Technology HR"},
+  {name:"Shubham Madhavi",company:"Micro1",pos:"Freelancer",branch:"EXTC",email:"2016.shubham.madhavi@ves.ac.in",mobile:"9820507812",hr:"Confidential — reach him directly"},
+  {name:"Akshay Moti Ahuja",company:"Mosaic Wellness",pos:"Associate Director, CEOs Office",branch:"EXTC",email:"a.aahuja96@gmail.com",mobile:"9405283733",hr:"Happy to discuss & share"},
+];
+
+const heatmapData = {"Electronics and Telecommunications":{"2009":2,"2010":1,"2014":1,"2015":2,"2016":3,"2017":6,"2018":7,"2019":1,"2020":9,"2021":8,"2022":6,"2023":6,"2024":2},"Information Technology":{"2008":1,"2009":1,"2011":1,"2012":1,"2014":1,"2015":1,"2016":1,"2017":3,"2018":5,"2019":8,"2020":3,"2021":7,"2022":4,"2023":8,"2024":4,"2025":2},"Electronics Engineering":{"2016":1,"2017":1,"2018":5,"2019":2,"2020":3,"2021":2,"2022":5,"2023":1,"2025":2,"2026":1},"Computer Engineering":{"2014":1,"2015":1,"2016":1,"2017":1,"2019":2,"2021":5,"2023":1,"2024":5,"2025":4},"Masters of Computer Application":{"2019":1,"2022":5,"2025":2},"Artificial Intelligence and Datascience":{"2019":1,"2022":1,"2024":3},"Instrumentation Engineering":{"2021":1,"2024":2},"Electronics and Computer Science":{"2018":1,"2019":1}};
+
+const decisions = [
+  {obj:"🎯 Campus Placement Drive",who:"Alumni with Placement Support / Referrals engagement",filter:"Use 'Placement Alumni' tab → sorted by priority stars",priority:"VP/Director level: JP Morgan (Vishal Israni), Blackrock (Priyadarshini MD), Morgan Stanley (Rushabh Shah), Oracle UK, IBM",action:"Email + phone call. Mention their VESIT batch year. Attach company JD and a thank-you letter from TPC."},
+  {obj:"🏢 Invite Company for Campus",who:"Alumni who shared actionable HR contacts",filter:"HR Pipeline tab → look for actual email IDs (not 'NA'/'No')",priority:"QuantInsti, Quantiphi, Vector Consulting, Coditas, Swagelok, WTW, ECGC Ltd. — all have real HR contacts shared",action:"Draft company invite email first to alumni, CC the HR they mentioned. Use their name as reference."},
+  {obj:"📚 Internship Pipeline",who:"Alumni who offered 'Internship Opportunities'",filter:"Filter Placement Alumni tab by 'Internship' keyword in engagement column",priority:"Recent batches 2021–2024 are most actionable (junior/mid roles with intern hiring power)",action:"Send TPC internship invite template. Offer to handle paperwork from college side."},
+  {obj:"🎤 Guest Lecture / Seminar",who:"Alumni in leadership roles (VP, Director, MD, Head)",filter:"Look for Priyadarshini (Blackrock MD), Tamanna Rupani (BNY VP), Vivek Krishnamoorthy (QuantInsti Head), Prakashkumar (Oracle UK)",priority:"High-profile roles = better student engagement and credibility. Prefer finance + tech mix.",action:"Personal email invite. Offer certificate of appreciation, photo op, LinkedIn post from VESIT official page."},
+  {obj:"🔎 Mock Interview Event",who:"84 alumni have offered Mock Interview / Resume Review",filter:"Current tab shows breadth — batch 2021–2023 most responsive",priority:"Multi-engagement alumni (priority 4–5 stars) are most committed and likely to show up",action:"Organize a 1-day TPC event. Send Google Calendar invite with exact slot. Cap at 5 students per alumni."},
+  {obj:"⚠️ Under-Engaged Branches",who:"Instrumentation Engg., AI & DS, Electronics & CS",filter:"Heatmap tab — these show very sparse cells across all years",priority:"Only 2–8 alumni responded from these branches. High engagement gap.",action:"Pull the original mailing list for these branches and send a targeted follow-up email campaign."},
+  {obj:"📊 Batch Segmentation Strategy",who:"Both senior (pre-2016) and recent (2020+) alumni",filter:"Batch trend chart shows 2021 as peak — most engaged current cohort",priority:"Senior alumni → company connects & JD invites. Junior alumni → peer mentoring, mock interviews.",action:"Two separate email templates: one for industry leaders, one for peer mentors. Personalize by batch year."},
+];
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+document.getElementById('kpi-placement').textContent = placementAlumni.length + '+';
+
+const CHART_DEFAULTS = {
+  color: '#e2e8f0',
+  plugins: { legend: { labels: { color: '#94a3b8', font: { family:'Space Grotesk', size:11 } } } },
+};
+
+// Charts (store instances to update on filter)
+const charts = {};
+
+// Branch Chart
+charts.branchChart = new Chart(document.getElementById('branchChart'), {
+  type:'bar',
+  data: {
+    labels: Object.keys(branchData).map(b => b.replace('Electronics and ', 'E&').replace('Information Technology','IT').replace('Computer Engineering','CE').replace('Masters of Computer Application','MCA').replace('Artificial Intelligence and Datascience','AI&DS').replace('Instrumentation Engineering','Instr.').replace('Electronics Engineering','EE')),
+    datasets:[{data:Object.values(branchData),backgroundColor:['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#84cc16','#f97316'],borderRadius:6}]
+  },
+  options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.raw} alumni`}}},scales:{x:{ticks:{color:'#64748b'},grid:{color:'#1e2d47'}},y:{ticks:{color:'#94a3b8',font:{size:10}},grid:{display:false}}}}
+});
+
+// Engagement Chart
+charts.engChart = new Chart(document.getElementById('engChart'), {
+  type:'bar',
+  data:{
+    labels: Object.keys(engData).map(e=>e.split('/')[0].trim().split(' ').slice(0,3).join(' ')),
+    datasets:[{data:Object.values(engData),backgroundColor:'#10b981',borderRadius:4}]
+  },
+  options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#64748b'},grid:{color:'#1e2d47'}},y:{ticks:{color:'#94a3b8',font:{size:10}},grid:{display:false}}}}
+});
+
+// Batch Trend
+charts.batchChart = new Chart(document.getElementById('batchChart'), {
+  type:'line',
+  data:{
+    labels:Object.keys(batchData),
+    datasets:[{data:Object.values(batchData),borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,0.08)',fill:true,tension:0.4,pointBackgroundColor:'#f59e0b',pointRadius:4,borderWidth:2.5}]
+  },
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#64748b'},grid:{color:'#1e2d47'}},y:{ticks:{color:'#64748b'},grid:{color:'#1e2d47'}}}}
+});
+
+// Company Chart
+charts.companyChart = new Chart(document.getElementById('companyChart'), {
+  type:'bar',
+  data:{
+    labels:Object.keys(companyData),
+    datasets:[{data:Object.values(companyData),backgroundColor:'#8b5cf6',borderRadius:4}]
+  },
+  options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#64748b',stepSize:1},grid:{color:'#1e2d47'}},y:{ticks:{color:'#94a3b8',font:{size:10}},grid:{display:false}}}}
+});
+
+// Program Donut
+charts.programChart = new Chart(document.getElementById('programChart'), {
+  type:'doughnut',
+  data:{labels:Object.keys(programData),datasets:[{data:Object.values(programData),backgroundColor:['#3b82f6','#10b981','#f59e0b'],borderWidth:0,hoverOffset:8}]},
+  options:{responsive:true,maintainAspectRatio:false,cutout:'70%',plugins:{legend:{position:'right',labels:{color:'#94a3b8',font:{size:11},padding:16}}}}
+});
+
+// ── PLACEMENT TABLE ───────────────────────────────────────────────────────────
+function renderPlacementTable(data) {
+  const tbody = document.getElementById('placementBody');
+  tbody.innerHTML = '';
+  document.getElementById('placementCount').textContent = `${data.length} alumni`;
+  data.forEach(a => {
+    const dots = [1,2,3,4,5].map(i=>`<div class="priority-dot ${i<=a.priority?'active':''}"></div>`).join('');
+    const row = `<tr>
+      <td><strong>${a.name}</strong></td>
+      <td><span class="tag tag-blue">${a.branch.replace('Electronics and ','E&').replace('Information Technology','IT').replace('Computer Engineering','CE').replace('Masters of Computer Application','MCA').replace('Electronics Engineering','EE').replace('Artificial Intelligence and Datascience','AI&DS').replace('Instrumentation Engineering','Instr.')}</span></td>
+      <td>${a.org}</td>
+      <td style="color:#94a3b8;font-size:11px">${a.pos}</td>
+      <td style="font-size:11px;font-family:'DM Mono',monospace;color:#60a5fa">${a.email}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:11px">${a.mobile}</td>
+      <td style="font-size:11px;color:#94a3b8">${a.eng}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:11px;text-align:center">${a.year}</td>
+      <td><div class="priority-bar"><div class="priority-dots">${dots}</div></div></td>
+    </tr>`;
+    tbody.innerHTML += row;
+  });
+}
+
+function filterPlacement() {
+  const q = document.getElementById('placementSearch').value.toLowerCase();
+  const b = document.getElementById('branchFilter').value.toLowerCase();
+  const filtered = placementAlumni.filter(a => {
+    const matchQ = !q || [a.name,a.org,a.branch,a.pos,a.eng].join(' ').toLowerCase().includes(q);
+    const matchB = !b || a.branch.toLowerCase().includes(b.split(' ')[0]);
+    return matchQ && matchB;
+  });
+  renderPlacementTable(filtered);
+}
+renderPlacementTable(placementAlumni);
+
+// --- Branch slicer support ---
+let activeShort = 'ALL';
+const shortToFull = {
+  'ALL': null,
+  'EXTC': 'Electronics and Telecommunications',
+  'IT': 'Information Technology',
+  'EE': 'Electronics Engineering',
+  'CE': 'Computer Engineering',
+  'MCA': 'Masters of Computer Application',
+  'AIDS': 'Artificial Intelligence and Datascience',
+  'INSTR': 'Instrumentation Engineering',
+  'ECS': 'Electronics and Computer Science'
+};
+
+function setBranch(code, btn){
+  activeShort = code;
+  // chip UI
+  document.querySelectorAll('#slicer .chip').forEach(c=>c.classList.remove('sel'));
+  if(btn) btn.classList.add('sel');
+  // propagate to selects used by other filters
+  const sb = document.getElementById('sb-branch');
+  const bf = document.getElementById('branchFilter');
+  const full = shortToFull[code];
+  if(sb) sb.value = full || '';
+  if(bf) bf.value = full || '';
+  // update KPIs
+  const total = full ? (branchData[full]||0) : Object.values(branchData).reduce((s,v)=>s+v,0);
+  document.querySelectorAll('.kpi-card .kpi-val')[0].textContent = total;
+  document.getElementById('kpi-placement').textContent = placementAlumni.filter(p=>!full||p.branch===full).length + '+';
+  document.querySelectorAll('.kpi-card .kpi-val')[2].textContent = 96; // mentorship static
+  document.querySelectorAll('.kpi-card .kpi-val')[3].textContent = full ? Object.keys(heatmapData[full]||{}).length : 19;
+  document.querySelectorAll('.kpi-card .kpi-val')[4].textContent = full ? Math.max(0, (placementAlumni.filter(p=>p.branch===full).length)) : 96;
+  // update placement table and counts
+  filterPlacement();
+  // update HR table
+  buildHRTableFiltered(full);
+  // update heatmap (show only branch row if filtered)
+  buildHeatmap(full);
+  // update branch chart to show selected branch or all
+  if(charts.branchChart){
+    if(!full){
+      charts.branchChart.data.labels = Object.keys(branchData).map(b=>b.replace('Electronics and ','E&').replace('Information Technology','IT').replace('Computer Engineering','CE').replace('Masters of Computer Application','MCA').replace('Artificial Intelligence and Datascience','AI&DS').replace('Instrumentation Engineering','Instr.').replace('Electronics Engineering','EE'));
+      charts.branchChart.data.datasets[0].data = Object.values(branchData);
+    } else {
+      charts.branchChart.data.labels = [ (full.replace('Electronics and ','E&').replace('Information Technology','IT').replace('Computer Engineering','CE').replace('Masters of Computer Application','MCA').replace('Artificial Intelligence and Datascience','AI&DS').replace('Instrumentation Engineering','Instr.').replace('Electronics Engineering','EE')) ];
+      charts.branchChart.data.datasets[0].data = [ branchData[full]||0 ];
+    }
+    charts.branchChart.update();
+  }
+}
+
+function buildHRTableFiltered(full){
+  const tbody = document.getElementById('hrBody');
+  tbody.innerHTML = '';
+  const rows = hrAlumni.filter(h=>{
+    if(!full) return true;
+    // check either full branch name or common short values present
+    const lower = (h.branch||'').toLowerCase();
+    return lower.includes((full.split(' ')[0]||'').toLowerCase()) || lower.includes((full.replace('Electronics and Telecommunications','EXTC')).toLowerCase());
+  });
+  if(!rows.length){ tbody.innerHTML = '<tr><td colspan="7" style="padding:20px;text-align:center;color:var(--muted)">No HR contacts for this filter.</td></tr>'; return; }
+  rows.forEach(a=>{
+    const isReal = a.hr.includes('@') || a.hr.match(/\d{7,}/);
+    tbody.innerHTML += `<tr>
+      <td><strong>${a.name}</strong></td>
+      <td><span class="tag tag-amber">${a.company}</span></td>
+      <td style="font-size:11px;color:#94a3b8">${a.pos}</td>
+      <td style="font-size:11px">${a.branch}</td>
+      <td style="font-size:11px;font-family:'DM Mono',monospace;color:#60a5fa">${a.email}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:11px">${a.mobile}</td>
+      <td><span class="tag ${isReal?'tag-green':'tag-red'}">${isReal?'✓ Actionable':'Follow-up Needed'}</span></td>
+    </tr>`;
+  });
+}
+
+// ── HEATMAP ───────────────────────────────────────────────────────────────────
+function buildHeatmap(filterBranch) {
+  const years = ['2008','2009','2010','2011','2012','2013','2014','2015','2016','2017','2018','2019','2020','2021','2022','2023','2024','2025','2026'];
+  const branches = filterBranch ? [filterBranch] : Object.keys(heatmapData);
+  const allVals = branches.flatMap(b => years.map(y => heatmapData[b]?.[y]||0));
+  const maxVal = Math.max(...allVals,1);
+
+  function heatColor(val) {
+    if (!val) return 'rgba(30,45,71,0.08)';
+    const t = val / maxVal;
+    const r = Math.round(59 + t*(239-59));
+    const g = Math.round(130 + t*(68-130));
+    const b2 = Math.round(246 + t*(68-246));
+    return `rgba(${r},${g},${b2},${0.25+t*0.6})`;
+  }
+
+  let html = '<table class="heatmap-table"><thead><tr><th style="text-align:left;min-width:160px">Branch</th>';
+  years.forEach(y => { html += `<th>${y}</th>`; });
+  html += '</tr></thead><tbody>';
+  branches.forEach(b => {
+    const shortB = b.replace('Electronics and Telecommunications','EXTC').replace('Information Technology','IT').replace('Electronics Engineering','E.Engg').replace('Computer Engineering','CE').replace('Masters of Computer Application','MCA').replace('Artificial Intelligence and Datascience','AI&DS').replace('Instrumentation Engineering','Instr.').replace('Electronics and Computer Science','E&CS');
+    html += `<tr><td class="branch-label">${shortB}</td>`;
+    years.forEach(y => {
+      const val = heatmapData[b]?.[y] || 0;
+      html += `<td style="background:${heatColor(val)};color:${val>0?'#e2e8f0':'transparent'}">${val||''}</td>`;
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  document.getElementById('heatmapContainer').innerHTML = html;
+}
+buildHeatmap();
+
+// ── HR TABLE ──────────────────────────────────────────────────────────────────
+function buildHRTable() {
+  const tbody = document.getElementById('hrBody');
+  hrAlumni.forEach((a,i) => {
+    const isReal = a.hr.includes('@') || a.hr.match(/\d{10}/);
+    tbody.innerHTML += `<tr>
+      <td><strong>${a.name}</strong></td>
+      <td><span class="tag tag-amber">${a.company}</span></td>
+      <td style="font-size:11px;color:#94a3b8">${a.pos}</td>
+      <td style="font-size:11px">${a.branch}</td>
+      <td style="font-size:11px;font-family:'DM Mono',monospace;color:#60a5fa">${a.email}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:11px">${a.mobile}</td>
+      <td><span class="tag ${isReal?'tag-green':'tag-red'}">${isReal?'✓ Actionable':'Follow-up Needed'}</span><div style="font-size:11px;color:#94a3b8;margin-top:4px">${a.hr}</div></td>
+    </tr>`;
+  });
+}
+buildHRTable();
+
+// ── DECISION GUIDE ────────────────────────────────────────────────────────────
+function buildDecisions() {
+  const grid = document.getElementById('decisionGrid');
+  decisions.forEach(d => {
+    grid.innerHTML += `<div class="decision-card">
+      <div class="objective">${d.obj}</div>
+      <div class="dc-section"><label>Who to Contact</label><p>${d.who}</p></div>
+      <div class="dc-section"><label>How to Filter</label><p>${d.filter}</p></div>
+      <div class="dc-section"><label>Priority Signals</label><p>${d.priority}</p></div>
+      <div class="dc-section"><label>Recommended Action</label><p>${d.action}</p></div>
+    </div>`;
+  });
+}
+buildDecisions();
+
+// ── TAB SWITCHING ─────────────────────────────────────────────────────────────
+function switchTab(name, ev) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+  const content = document.getElementById('tab-'+name);
+  if (content) content.classList.add('active');
+  // If called from a click event, mark that button active; otherwise try to find matching tab
+  if (ev && ev.target) ev.target.classList.add('active');
+  else {
+    const btn = Array.from(document.querySelectorAll('.tab')).find(t => t.textContent.trim().toLowerCase().startsWith(name));
+    if (btn) btn.classList.add('active');
+  }
+}
+
+// Sidebar toggle and helpers
+function toggleSidebar(ev) {
+  const sb = document.getElementById('sidebar');
+  const dash = document.querySelector('.dashboard');
+  const btn = document.getElementById('menuBtn');
+  if (!sb || !dash) return;
+  const isMobile = window.innerWidth <= 900;
+  if (isMobile) {
+    // mobile: open/close drawer
+    sb.classList.toggle('open');
+    const expanded = sb.classList.contains('open');
+    if (btn) btn.setAttribute('aria-expanded', expanded? 'true' : 'false');
+  } else {
+    // desktop: collapse/minimize
+    dash.classList.toggle('collapsed');
+    sb.classList.toggle('collapsed');
+    const collapsed = dash.classList.contains('collapsed');
+    if (btn) btn.setAttribute('aria-expanded', collapsed? 'false' : 'true');
+  }
+}
+
+function applySidebarFilter() {
+  const v = document.getElementById('sb-branch').value;
+  const bf = document.getElementById('branchFilter');
+  if (bf) bf.value = v;
+  // Switch to placement tab for convenience
+  document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+  const placementTabBtn = Array.from(document.querySelectorAll('.tab')).find(t => t.textContent.trim().toLowerCase().startsWith('placement'));
+  if (placementTabBtn) placementTabBtn.classList.add('active');
+  switchTab('placement');
+  filterPlacement();
+}
+</script>
+</body>
+</html>
