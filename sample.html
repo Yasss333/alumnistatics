@@ -203,7 +203,6 @@
         <option>Masters of Computer Application</option>
         <option>Artificial Intelligence and Datascience</option>
         <option>Instrumentation Engineering</option>
-        <option>Electronics and Computer Science</option>
       </select>
     </div>
     <div style="padding:18px">
@@ -232,7 +231,7 @@
   <div class="kpi-strip">
     <div class="kpi-card"><div class="kpi-val">174</div><div class="kpi-label">Total Responses</div></div>
     <div class="kpi-card"><div class="kpi-val" id="kpi-placement">—</div><div class="kpi-label">Placement Support Alumni</div></div>
-    <div class="kpi-card"><div class="kpi-val">15</div><div class="kpi-label">HR Contacts Shared</div></div>
+    <div class="kpi-card"><div class="kpi-val">18</div><div class="kpi-label">HR Contacts Shared</div></div>
     <div class="kpi-card"><div class="kpi-val">19</div><div class="kpi-label">Passout Batches</div></div>
     <div class="kpi-card"><div class="kpi-val">96</div><div class="kpi-label">Mentorship Offers</div></div>
   </div>
@@ -285,7 +284,6 @@
         <option>Masters of Computer Application</option>
         <option>Artificial Intelligence and Datascience</option>
         <option>Instrumentation Engineering</option>
-        <option>Electronics and Computer Science</option>
       </select>
       <div class="count-badge" id="placementCount">—</div>
     </div>
@@ -329,8 +327,8 @@
 
 <script>
 // ── DATA ──────────────────────────────────────────────────────────────────────
-const branchData = {"Electronics and Telecommunications":61,"Information Technology":51,"Electronics Engineering":24,"Computer Engineering":22,"Masters of Computer Application":8,"Artificial Intelligence and Datascience":5,"Instrumentation Engineering":3,"Electronics and Computer Science":2};
-const engData = {"Career Guidance / Mentorship":96,"Mock Interview / Resume Review":84,"Guest Lecture / Seminar":64,"Placement Support / Referrals":68,"Event Participation / Jury / Panelist":42,"Workshop / Technical Training":37,"Board of Studies (BOS) / Curriculum Feedback":18,"Research Collaboration":14,"Internship Opportunities":12,"Entrepreneurship / Startup Mentorship":12};
+const branchData = {"Electronics and Telecommunications":61,"Information Technology":51,"Electronics Engineering":23,"Computer Engineering":21,"Masters of Computer Application":8,"Artificial Intelligence and Datascience":5,"Instrumentation Engineering":3,"Electronics and Computer Science":2};
+const engData = {"Career Guidance / Mentorship":96,"Mock Interview / Resume Review":84,"Guest Lecture / Seminar":64,"Placement Support / Referrals":64,"Event Participation / Jury / Panelist":42,"Workshop / Technical Training":37,"Board of Studies (BOS) / Curriculum Feedback":18,"Research Collaboration":14,"Internship Opportunities":12,"Entrepreneurship / Startup Mentorship":12};
 const batchData = {"2003":3,"2006":1,"2008":1,"2009":3,"2010":1,"2011":1,"2012":1,"2014":3,"2015":4,"2016":6,"2017":11,"2018":18,"2019":16,"2020":15,"2021":23,"2022":21,"2023":16,"2024":16,"2025":10,"2026":1};
 const companyData = {"TCS":3,"Capgemini":3,"JP Morgan Chase & Co":3,"Deloitte USI":2,"Deloitte":2,"SAP":2,"Saint Gobain":2,"POWERGRID":2,"ISS-STOXX":2,"Ministry of Defence":2};
 const programData = {"Bachelor of Engineering":165,"M.C.A":8,"M.E.":1};
@@ -344,15 +342,15 @@ const placementAlumni = [
   {name:"Riya Karia",branch:"Information Technology",org:"JP Morgan Chase & Co",pos:"Senior Software Engineer",email:"kariariya20@gmail.com",mobile:"9922892244",eng:"Career Guidance, Placement Support",year:"2019",priority:3},
   {name:"Mohit Singh Adhikari",branch:"Electronics and Telecommunications",org:"Here Technologies",pos:"Data Scientist",email:"—",mobile:"9820172922",eng:"Guest Lecture, Workshop, Career Guidance, Mock Interview, Placement Support, BOS, Industry Collaboration, Events, Startup Mentorship, Internship, Industrial Visit, Research, Scholarship",year:"2022",priority:5},
   {name:"Gayatri Ganapathy",branch:"Computer Engineering",org:"Electronic Arts",pos:"—",email:"gayatrig1997@gmail.com",mobile:"17787237244",eng:"All engagement types",year:"2019",priority:5},
-  {name:"Aryan Raje",branch:"Computer Engineering",org:"Deloitte USI",pos:"Analyst",email:"aryanraje159@gmail.com",mobile:"8104982720",eng:"Guest Lecture, Career Guidance, Mock Interview, Placement Support, Events",year:"2025",priority:4},
   {name:"Amit Vishwakarma",branch:"Masters of Computer Application",org:"Quantiphi",pos:"Senior Level 1",email:"amitvishwa789@gmail.com",mobile:"8652012928",eng:"Career Guidance, Mock Interview, Placement Support",year:"2022",priority:3},
   {name:"Moin Ghadiyali",branch:"Masters of Computer Application",org:"Nomura Services India",pos:"Sr. Software Engineer",email:"2020.moin.ghadiyali@ves.ac.in",mobile:"9082170938",eng:"Workshop, Mock Interview, Placement Support, BOS, Internship, Research, Scholarship",year:"2022",priority:5},
+  {name:"Aryan Raje",branch:"Computer Engineering",org:"Deloitte USI",pos:"Analyst",email:"aryanraje159@gmail.com",mobile:"8104982720",eng:"Guest Lecture, Career Guidance, Mock Interview, Placement Support, Events",year:"2025",priority:4},
   {name:"Nikita Joshi",branch:"Electronics Engineering",org:"Nav Canada",pos:"Business Analyst",email:"Nikitajoshi99@gmail.com",mobile:"16476719698",eng:"Career Guidance, Mock Interview, Placement Support",year:"2019",priority:3},
   {name:"Pranay Mahaldar",branch:"Electronics Engineering",org:"SAP",pos:"Senior Cybersecurity Advisor",email:"pranaymahaldar@hotmail.com",mobile:"7051054747",eng:"Guest Lecture, Career Guidance, Mock Interview, Placement Support",year:"2018",priority:4},
   {name:"Himanshu Gosavi",branch:"Electronics and Telecommunications",org:"NTT DATA",pos:"SDE2",email:"2016.himanshu.gosavi@ves.ac.in",mobile:"7028035004",eng:"Career Guidance, Placement Support",year:"2020",priority:3},
   {name:"Samarth Shahu",branch:"Information Technology",org:"Deloitte India",pos:"Consultant",email:"shahusam20@gmail.com",mobile:"8419922361",eng:"Guest Lecture, Career Guidance, Mock Interview, Placement Support",year:"2021",priority:4},
   {name:"Nidhi Thakkar",branch:"Information Technology",org:"JP Morgan Chase & Co",pos:"Software Engineer II",email:"nthakkar2010@gmail.com",mobile:"9769326454",eng:"Workshop, Career Guidance, Placement Support",year:"2023",priority:3},
-  {name:"Srishti Dubey",branch:"Electronics and Telecommunications",org:"Walmart",pos:"Senior Data Engineer",email:"srishtidubey.96@gmail.com",mobile:"+12064667485",eng:"Mock Interview, Placement Support",year:"2018",priority:3},
+  {name:"Srishti Dubey",branch:"Electronics and Telecommunications",org:"Walmart",pos:"Senior Data Engineer",email:"srishtidubey.96@gmail.com",mobile:"12064667485",eng:"Mock Interview, Placement Support",year:"2018",priority:3},
   {name:"Apurva Naik",branch:"Electronics and Telecommunications",org:"IBM",pos:"Senior Consultant",email:"—",mobile:"9158230821",eng:"Placement Support",year:"2018",priority:2},
   {name:"Aditi Miniyar",branch:"Information Technology",org:"Deloitte USI",pos:"—",email:"aditiminiyar@gmail.com",mobile:"7499254914",eng:"Guest Lecture, Career Guidance, Mock Interview, Placement Support",year:"2024",priority:4},
   {name:"Aishwarya C",branch:"Electronics Engineering",org:"Salesforce",pos:"—",email:"2017.aishwarya.chourasia@ves.ac.in",mobile:"919969212467",eng:"Guest Lecture, Workshop, Career Guidance, Mock Interview, Placement Support",year:"2021",priority:4},
@@ -364,33 +362,20 @@ const placementAlumni = [
 ];
 
 const hrAlumni = [
-  {name:"Vivek Krishnamoorthy",company:"QuantInsti",pos:"Head - Research & Content",branch:"Electronics and Telecommunications",email:"vivek.krishnamoorthy@gmail.com",mobile:"9619758604",hr:"nisha.s@quantinsti.com; ekta.s@quantinsti.com"},
-  {name:"Prathmesh Pawar",company:"Vector Consulting Group",pos:"Business Analyst",branch:"Artificial Intelligence and Datascience",email:"prathmeshpawar2001@gmail.com",mobile:"8928589535",hr:"subhodeep@vectorconsulting.in"},
-  {name:"Amit Vishwakarma",company:"Quantiphi",pos:"Senior Level 1",branch:"Masters of Computer Application",email:"amitvishwa789@gmail.com",mobile:"8652012928",hr:"simyoan.diwarln01@quantiphi.com"},
-  {name:"Atharva Godkar",company:"Swagelok Bombay",pos:"Proposal Engineer",branch:"Electronics Engineering",email:"arg96511@gmail.com",mobile:"9820374524",hr:"2267164000 (Deepaki Vishwakarma, HR)"},
-  {name:"Neel Gala",company:"Coditas",pos:"Software Engineer",branch:"Computer Engineering",email:"neelkgala@gmail.com",mobile:"8080758208",hr:"hr@coditas.com"},
-  {name:"Pronoy",company:"ECGC Ltd.",pos:"Engineer",branch:"Electronics Engineering",email:"pronoym99@gmail.com",mobile:"7738034876",hr:"hrd@ecgc.in"},
-  {name:"Kanaiya Kanabar",company:"WTW",pos:"Associate",branch:"Information Technology",email:"2019kanaiya.kanabar@ves.ac.in",mobile:"7622091456",hr:"Malvika Mishra (HR at WTW)"},
-  {name:"Vikas Kushawaha",company:"Astellas",pos:"Engineer",branch:"Electronics and Telecommunications",email:"vikaskushawaha111@gmail.com",mobile:"9594812482",hr:"https://linkedin.com/in/jagadeesan-narayanasamy-5615726"},
-  {name:"Ronak Panchal",company:"Wissen Technology",pos:"Consultant",branch:"Electronics and Telecommunications",email:"ronak.v.panchal01@gmail.com",mobile:"9137427147",hr:"Wissen Technology"},
-  {name:"Shubham Madhavi",company:"Micro1",pos:"Freelancer",branch:"Electronics and Telecommunications",email:"2016.shubham.madhavi@ves.ac.in",mobile:"9820507812",hr:"Confidential — reach him directly"},
-  {name:"Akshay Moti Ahuja",company:"Mosaic Wellness",pos:"Associate Director, CEOs Office",branch:"Electronics and Telecommunications",email:"a.aahuja96@gmail.com",mobile:"9405283733",hr:"Happy to discuss & share"},
-  {name:"Tejas Gala",company:"ISS-STOXX",pos:"Analyst",branch:"Computer Engineering",email:"galatejas777@gmail.com",mobile:"9892609892",hr:"galatejas777@gmail.com"},
-  {name:"Tamanna Rupani",company:"Bank of New York",pos:"VP Full Stack Engineer",branch:"Electronics Engineering",email:"tamannarupani96@gmail.com",mobile:"9594403000",hr:"NA"},
-  {name:"Sreekesh Iyer",company:"JPMorganChase",pos:"SDE 2",branch:"Information Technology",email:"sreekesh.subramanian@gmail.com",mobile:"7506916922",hr:""},
-  {name:"Vishal Mahesh Israni",company:"JP Morgan Chase",pos:"Vice President",branch:"Information Technology",email:"2015vishal.israni@gmail.com",mobile:"8698552370",hr:"2015vishal.israni@gmail.com"}
+  {name:"Vivek Krishnamoorthy",company:"QuantInsti",pos:"Head - Research & Content",branch:"EXTC",email:"vivek.krishnamoorthy@gmail.com",mobile:"9619758604",hr:"nisha.s@quantinsti.com; ekta.s@quantinsti.com (mention his name)"},
+  {name:"Prathmesh Pawar",company:"Vector Consulting Group",pos:"—",branch:"AI & DS",email:"prathmeshpawar2001@gmail.com",mobile:"8928589535",hr:"subhodeep@vectorconsulting.in"},
+  {name:"Amit Vishwakarma",company:"Quantiphi",pos:"Senior Level 1",branch:"MCA",email:"amitvishwa789@gmail.com",mobile:"8652012928",hr:"simyoan.diwarln01@quantiphi.com"},
+  {name:"Atharva Godkar",company:"Swagelok Bombay",pos:"Proposal Engineer",branch:"Electronics Engg.",email:"arg96511@gmail.com",mobile:"9820374524",hr:"2267164000 (Deepaki Vishwakarma, HR)"},
+  {name:"Neel Gala",company:"Coditas",pos:"—",branch:"Computer Engg.",email:"neelkgala@gmail.com",mobile:"8080758208",hr:"hr@coditas.com"},
+  {name:"Pronoy",company:"ECGC Ltd.",pos:"—",branch:"Electronics Engg.",email:"pronoym99@gmail.com",mobile:"7738034876",hr:"hrd@ecgc.in (Govt. Org — internships/apprenticeships)"},
+  {name:"Kanaiya Kanabar",company:"WTW",pos:"—",branch:"IT",email:"2019kanaiya.kanabar@ves.ac.in",mobile:"7622091456",hr:"Malvika Mishra (HR at WTW)"},
+  {name:"Vikas Kushawaha",company:"Astellas",pos:"—",branch:"EXTC",email:"vikaskushawaha111@gmail.com",mobile:"9594812482",hr:"https://linkedin.com/in/jagadeesan-narayanasamy-5615726"},
+  {name:"Ronak Panchal",company:"Wissen Technology",pos:"—",branch:"EXTC",email:"ronak.v.panchal01@gmail.com",mobile:"9137427147",hr:"Contact Wissen Technology HR"},
+  {name:"Shubham Madhavi",company:"Micro1",pos:"Freelancer",branch:"EXTC",email:"2016.shubham.madhavi@ves.ac.in",mobile:"9820507812",hr:"Confidential — reach him directly"},
+  {name:"Akshay Moti Ahuja",company:"Mosaic Wellness",pos:"Associate Director, CEOs Office",branch:"EXTC",email:"a.aahuja96@gmail.com",mobile:"9405283733",hr:"Happy to discuss & share"},
 ];
 
-const heatmapData = {
-  "Electronics and Telecommunications":{"2009":2,"2010":1,"2014":1,"2015":2,"2016":3,"2017":6,"2018":7,"2019":1,"2020":9,"2021":8,"2022":6,"2023":6,"2024":2},
-  "Information Technology":{"2008":1,"2009":1,"2011":1,"2012":1,"2014":1,"2015":1,"2016":1,"2017":3,"2018":5,"2019":8,"2020":3,"2021":7,"2022":4,"2023":8,"2024":4,"2025":2},
-  "Electronics Engineering":{"2016":1,"2017":1,"2018":5,"2019":2,"2020":3,"2021":2,"2022":5,"2023":1,"2025":2,"2026":1},
-  "Computer Engineering":{"2014":1,"2015":1,"2016":1,"2017":1,"2019":2,"2021":5,"2023":1,"2024":5,"2025":4,"2026":1},
-  "Masters of Computer Application":{"2019":1,"2022":5,"2025":2},
-  "Artificial Intelligence and Datascience":{"2019":1,"2022":1,"2024":3},
-  "Instrumentation Engineering":{"2021":1,"2024":2},
-  "Electronics and Computer Science":{"2018":1,"2019":1}
-};
+const heatmapData = {"Electronics and Telecommunications":{"2009":2,"2010":1,"2014":1,"2015":2,"2016":3,"2017":6,"2018":7,"2019":1,"2020":9,"2021":8,"2022":6,"2023":6,"2024":2},"Information Technology":{"2008":1,"2009":1,"2011":1,"2012":1,"2014":1,"2015":1,"2016":1,"2017":3,"2018":5,"2019":8,"2020":3,"2021":7,"2022":4,"2023":8,"2024":4,"2025":2},"Electronics Engineering":{"2016":1,"2017":1,"2018":5,"2019":2,"2020":3,"2021":2,"2022":5,"2023":1,"2025":2,"2026":1},"Computer Engineering":{"2014":1,"2015":1,"2016":1,"2017":1,"2019":2,"2021":5,"2023":1,"2024":5,"2025":4},"Masters of Computer Application":{"2019":1,"2022":5,"2025":2},"Artificial Intelligence and Datascience":{"2019":1,"2022":1,"2024":3},"Instrumentation Engineering":{"2021":1,"2024":2},"Electronics and Computer Science":{"2018":1,"2019":1}};
 
 const decisions = [
   {obj:"🎯 Campus Placement Drive",who:"Alumni with Placement Support / Referrals engagement",filter:"Use 'Placement Alumni' tab → sorted by priority stars",priority:"VP/Director level: JP Morgan (Vishal Israni), Blackrock (Priyadarshini MD), Morgan Stanley (Rushabh Shah), Oracle UK, IBM",action:"Email + phone call. Mention their VESIT batch year. Attach company JD and a thank-you letter from TPC."},
